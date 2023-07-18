@@ -90,16 +90,16 @@ where
 
 /// [`Dropdown`] component properties.
 #[derive(Props)]
-pub struct DropdownProps<'a, T: 'static> {
+pub struct AutoCompleteProps<'a, T: 'static> {
     /// Selectable items, like [`DropdownItem`]
     children: Element<'a>,
-    /// Selected value.
+    /// Input value.
     value: T,
 }
 
 /// Current status of the Dropdown.
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
-pub enum DropdownState {
+pub enum AutoCompleteState {
     /// Default state.
     #[default]
     Idle,
@@ -110,7 +110,7 @@ pub enum DropdownState {
 /// `Dropdown` component.
 ///
 /// # Props
-/// See [`DropdownProps`].
+/// See [`AutoCompleteProps`].
 ///
 /// # Styling
 /// Inherits the [`DropdownTheme`](freya_hooks::DropdownTheme) theme.
@@ -123,14 +123,14 @@ pub enum DropdownState {
 ///     let values = cx.use_hook(|| vec!["A".to_string(), "B".to_string(), "C".to_string()]);
 ///     let selected_dropdown = use_state(cx, || "A".to_string());
 ///     render!(
-///         Dropdown {
+///         AutoComplete {
 ///             value: selected_dropdown.get().clone(),
 ///             values.iter().map(|ch| {
 ///                 rsx!(
-///                     DropdownItem {
+///                     AutoCompleteItem {
 ///                         value: ch.to_string(),
 ///                         onclick: move |_| selected_dropdown.set(ch.to_string()),
-///                         label { "{ch}" }
+///                         label { "! {ch}" }
 ///                     }
 ///                 )
 ///             })
@@ -139,7 +139,7 @@ pub enum DropdownState {
 /// }
 /// ```
 #[allow(non_snake_case)]
-pub fn AutoComplete<'a, T>(cx: Scope<'a, DropdownProps<'a, T>>) -> Element<'a>
+pub fn AutoComplete<'a, T>(cx: Scope<'a, AutoCompleteProps<'a, T>>) -> Element<'a>
 where
     T: PartialEq + Clone + Display + 'static,
 {
@@ -156,8 +156,8 @@ where
 
     let desplegable_background = theme.dropdown.desplegable_background;
     let button_background = match *state.get() {
-        DropdownState::Hovering => theme.dropdown.hover_background,
-        DropdownState::Idle => theme.dropdown.background_button,
+        AutoCompleteProps::Hovering => theme.dropdown.hover_background,
+        AutoCompleteProps::Idle => theme.dropdown.background_button,
     };
     let color = theme.dropdown.font_theme.color;
 
@@ -214,9 +214,9 @@ where
 				}
 			}
 			rect {
-				width : "130",
+				width : "100%",
 				height : "auto",
-				overflow : "clip",
+				//overflow : "clip",
 				layer : "-1",
 				if *opened.get() {
 					&cx.props.children
