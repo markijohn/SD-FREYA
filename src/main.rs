@@ -8,7 +8,7 @@ use freya::prelude::*;
 mod component;
 
 use component::split::{SplitDirection, Split};
-use component::auto_complete::{AutoComplete, AutoCompleteItem};
+use component::auto_complete;
 
 fn main() {
     launch(app);
@@ -50,7 +50,17 @@ fn app(cx: Scope) -> Element {
                     })
                 }
             }
-            MyAutoComplete {},
+            auto_complete::SimpleWordComplete {
+                get_word_hints : |last| {
+                    const hints:[&'static str;79] = [
+                        "Alice", "Bob", "Car","Dog","Elephant","Fish","Giraffe","Horse","Ice cream","Jaguar","Kangaroo","Lion","Monkey","Nectarine","Octopus","Penguin","Queen","Rabbit","Snake","Tiger","Umbrella","Vase","Whale","Xylophone","Yak","Zebra",
+                        "Aardvark","Bison","Cheetah","Dolphin","Elephant","Falcon","Gorilla","Hippopotamus","Ibis","Jaguar","Kangaroo","Lion","Moose","Nightingale","Ostrich","Penguin","Quokka","Raccoon","Squirrel","Tiger","Umbrella","Vulture","Walrus","X-ray tetra","Yak","Zebra",
+                        "Alligator","Bear","Cat","Dog","Elephant","Fox","Giraffe","Horse","Iguana","Jaguar","Kangaroo","Lion","Monkey","Nightingale","Octopus","Penguin","Quokka","Rabbit","Snake","Tiger","Umbrella","Vulture","Whale","X-ray fish","Yak","Zoo",
+                        "Alpine"];
+                    hints.iter().filter( |h| h.len() != last.len() && h.starts_with(last) )
+                        .map( |e| e.to_string() ).collect::<Vec<String>>()
+                }
+            },
             rect {
                 width: "100%",
                 direction: "horizontal",
@@ -84,55 +94,4 @@ fn app(cx: Scope) -> Element {
             
         }
     )
-}
-
-
-fn MyAutoComplete(cx:Scope) -> Element {
-    const hints:[&'static str;79] = [
-        "Alice", "Bob", "Car","Dog","Elephant","Fish","Giraffe","Horse","Ice cream","Jaguar","Kangaroo","Lion","Monkey","Nectarine","Octopus","Penguin","Queen","Rabbit","Snake","Tiger","Umbrella","Vase","Whale","Xylophone","Yak","Zebra",
-        "Aardvark","Bison","Cheetah","Dolphin","Elephant","Falcon","Gorilla","Hippopotamus","Ibis","Jaguar","Kangaroo","Lion","Moose","Nightingale","Ostrich","Penguin","Quokka","Raccoon","Squirrel","Tiger","Umbrella","Vulture","Walrus","X-ray tetra","Yak","Zebra",
-        "Alligator","Bear","Cat","Dog","Elephant","Fox","Giraffe","Horse","Iguana","Jaguar","Kangaroo","Lion","Monkey","Nightingale","Octopus","Penguin","Quokka","Rabbit","Snake","Tiger","Umbrella","Vulture","Whale","X-ray fish","Yak","Zoo",
-        "Alpine"];
-    use_shared_state_provider(cx, ||false);
-    let opened = use_shared_state::<bool>(cx).unwrap();
-    let input_value = use_state(cx, String::new);
-    let auto_hints:&UseState<Vec<&'static str>> = use_state(cx, Vec::new);
-
-    let onchange = |e:String| {
-        println!("IsEq? '{}' = '{}' : {}", input_value.get(), e, input_value.get() == &e);
-        if input_value.get() != &e {
-            let last = &e[ e.rfind( char::is_whitespace ).map( |e| e+1 ).unwrap_or( e.len() ) .. ];
-            if last.len() > 0 {
-                let mut new_hints = hints.iter().filter( |h| h.len() != last.len() && h.starts_with(last) )
-                .map( |e| *e ).collect::<Vec<&'static str>>();
-                if auto_hints.get() != &new_hints {
-                    auto_hints.set( new_hints );
-                }
-                *opened.write() = true;
-                println!("NewHints for {last} : {}", auto_hints.get().len() );
-                println!("Ok");
-            } else {
-                println!("No hints");
-                *opened.write() = false;
-                auto_hints.set( vec![] );
-            }            
-            input_value.set(e.clone() );
-        }
-    };
-
-    let e = render!(
-        AutoComplete {
-            value : input_value.get().clone(),
-            onchange : onchange,
-            for h in auto_hints.get().iter() {
-                AutoCompleteItem {
-                    value : h.to_owned(),
-                    onclick : |_| {},
-                    label { "{h}" }
-                }
-            }        
-        }
-    );
-
-    e
 }

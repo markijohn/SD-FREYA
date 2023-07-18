@@ -7,23 +7,18 @@ use freya::prelude::keyboard::Key;
 /// [`AutoCompleteItem`] component properties.
 #[derive(Props)]
 pub struct AutoCompleteItemProps<'a, T: 'static> {
-    /// Selectable items, like [`DropdownItem`]
+    /// Presentation of value
     children: Element<'a>,
-    /// Selected value.
+
+    /// popup list index
+    item_idx : i32,
+
+    /// value
     value: T,
+
     /// Handler for the `onclick` event.
     #[props(optional)]
     onclick: Option<EventHandler<'a, &'a T >>,
-}
-
-/// Current status of the AutoCompleteItem.
-#[derive(Debug, Default, PartialEq, Clone, Copy)]
-pub enum AutoCompleteItemState {
-    /// Default state.
-    #[default]
-    Idle,
-    /// Dropdown item is being hovered.
-    Hovering,
 }
 
 /// `AutoCompleteItem` component.
@@ -36,42 +31,27 @@ pub enum AutoCompleteItemState {
 #[allow(non_snake_case)]
 pub fn AutoCompleteItem<'a, T>(cx: Scope<'a, AutoCompleteItemProps<'a, T>>) -> Element<'a>
 where
-    T: PartialEq + 'static,
+    T: PartialEq + 'static + Clone,
 {
-    // let selected = use_shared_state::<T>(cx).unwrap();
     let theme = use_get_theme(cx);
-    let focus = use_focus(cx);
-    let state = use_state(cx, AutoCompleteItemState::default);
+    let state = use_shared_state::<AutoCompleteState>(cx).unwrap();
+    let is_focused = state.read().idx() == cx.props.item_idx;
 
-    // let is_selected = *selected.read() == cx.props.value;
-
-    let background = match *state.get() {
-        // _ if is_selected => "rgb(50,50,50)",
-        AutoCompleteItemState::Hovering => theme.dropdown_item.hover_background,
-        AutoCompleteItemState::Idle => theme.dropdown_item.background,
+    let background = if is_focused {
+        theme.dropdown_item.hover_background
+    } else {
+        theme.dropdown_item.background
     };
     let color = theme.dropdown_item.font_theme.color;
 
     let onclick = move |_: MouseEvent| {
-        if let Some(onclick) = &cx.props.onclick {
-            onclick.call(&cx.props.value)
+        if state.read().is_focused() {
+            *state.write() = AutoCompleteState::Selected( cx.props.item_idx );
         }
     };
 
     let onmouseenter = move |_| {
-        state.set(AutoCompleteItemState::Hovering);
-    };
-
-    let onmouseleave = move |_| {
-        state.set(AutoCompleteItemState::default());
-    };
-
-    let onkeydown = move |ev: KeyboardEvent| {
-        if ev.key == Key::Enter {
-            if let Some(onclick) = &cx.props.onclick {
-                onclick.call(&cx.props.value)
-            }
-        }
+        *state.write() = AutoCompleteState::Focused( cx.props.item_idx );
     };
 
     render!(rect {
@@ -81,14 +61,12 @@ where
         background: background,
         padding: "6",
         onmouseenter: onmouseenter,
-        onmouseleave: onmouseleave,
         onclick: onclick,
-        onkeydown: onkeydown,
         &cx.props.children
     })
 }
 
-/// [`Dropdown`] component properties.
+/// [`AutoComplete`] component properties.
 #[derive(Props)]
 pub struct AutoCompleteProps<'a, T: 'static> {
     /// Input value
@@ -96,24 +74,50 @@ pub struct AutoCompleteProps<'a, T: 'static> {
 
     // #[props(optional, default=None)]
     // updated : Option<bool>,
+    item_count : i32,
 
     #[props(optional)]
     onchange : Option< EventHandler<'a, String> >,
 
+    #[props(optional)]
+    onselected : Option< EventHandler<'a, String> >,
+
     children: Element<'a>,
 }
 
-/// Current status of the Dropdown.
+/// Current status of the AutoComplete.
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
 pub enum AutoCompleteState {
     /// Default state.
     #[default]
-    Idle,
-    /// Dropdown is being hovered.
-    Hovering,
+    None,
+
+    /// Focus item
+    Focused(i32),
+
+    /// Selected item (click item, key enter)
+    Selected(i32)
 }
 
-/// `Dropdown` component.
+impl AutoCompleteState {
+    pub fn idx(&self) -> i32 {
+        match self {
+            Self::None => -1,
+            Self::Focused(v) => *v,
+            Self::Selected(v) => *v
+        }
+    }
+
+    pub fn is_focused(&self) -> bool {
+        matches!( self, Self::Focused(_) )
+    }
+
+    pub fn is_selected(&self) -> bool {
+        matches!( self, Self::Selected(_) )
+    }
+}
+
+/// `AutoComplete` component.
 ///
 /// # Props
 /// See [`AutoCompleteProps`].
@@ -145,155 +149,155 @@ pub enum AutoCompleteState {
 /// }
 /// ```
 #[allow(non_snake_case)]
-pub fn AutoComplete<'a, T>(cx: Scope<'a, AutoCompleteProps<'a, T>>) -> Element<'a>
+fn AutoComplete<'a, T>(cx: Scope<'a, AutoCompleteProps<'a, T>>) -> Element<'a>
 where
     T: PartialEq + Clone + Display + 'static,
 {
-    use_shared_state_provider(cx, || cx.props.value.clone());
-    let selected = use_shared_state::<T>(cx).unwrap();
     let theme = use_get_theme(cx);
-    let focus = use_focus(cx);
-    let state = use_state(cx, AutoCompleteState::default);
-    //let opened = use_state(cx, || false);
+    let state = use_shared_state::<AutoCompleteState>(cx).unwrap();
     let opened = use_shared_state::<bool>(cx).unwrap();
 
-    //println!("ScopeID : {:?}", cx.scope_id());
+    println!("is_opened : {}" , *opened.read() && cx.props.children.is_some() );
 
-	let is_focused = focus.is_focused();
-    let focus_id = focus.attribute(cx);
-    //let is_opened = *opened.get() && cx.props.children.is_some();
-    let is_opened = *opened.read() && cx.props.children.is_some();
-    println!("is_opened {is_opened}");
-
-    let desplegable_background = theme.dropdown.desplegable_background;
-    let button_background = match *state.get() {
-        AutoCompleteState::Hovering => theme.dropdown.hover_background,
-        AutoCompleteState::Idle => theme.dropdown.background_button,
-    };
     let color = theme.dropdown.font_theme.color;
 
-    
-
     // Update the provided value if the passed value changes
-    use_effect(cx, &cx.props.value, move |value| {
-        *selected.write() = value;
-        async move {}
-    });
+    // use_effect(cx, &cx.props.value, move |value| {
+    //     *selected.write() = value;
+    //     async move {}
+    // });
 
     // Close the dropdown if clicked anywhere
     let onglobalclick = move |_: MouseEvent| {
-        // opened.set(false);
+        *state.write() = AutoCompleteState::None;
         *opened.write() = false;
     };
 
-    let onkeydown = move |e: KeyboardEvent| {
+    let onkeyup = move |e:KeyboardEvent| {
+        let is_opened = *opened.read() && cx.props.children.is_some();
+        let idx = state.read().idx();
         match e.key {
             // Close when `Escape` key is pressed
             Key::Escape => {
-                // opened.set(false);
                 *opened.write() = false;
+                *state.write() = AutoCompleteState::None;
             }
             // Open the dropdown items when the `Enter` key is pressed
-            Key::Enter if is_focused && !is_opened => {
-                // opened.set(true);
-                *opened.write() = true;
+            Key::Enter if is_opened => {
+                if cx.props.item_count > 0 {
+                    *opened.write() = false;
+                    *state.write() = AutoCompleteState::Selected( idx );
+                }
+            }
+            Key::ArrowUp => {
+                if is_opened && cx.props.item_count > 0 {
+                    if idx - 1 < 0 {
+                        *state.write() = AutoCompleteState::Focused( cx.props.item_count-1 );
+                    } else {
+                        *state.write() = AutoCompleteState::Focused( idx - 1 );
+                    }
+                }
+            }
+            Key::ArrowDown => {
+                if is_opened && cx.props.item_count > 0 {
+                    if idx + 1 >= cx.props.item_count {
+                        *state.write() = AutoCompleteState::Focused( 0 );
+                    } else {
+                        *state.write() = AutoCompleteState::Focused( idx + 1 );
+                    }
+                }
             }
             _ => {}
         }
     };
 
-	let input_text = use_state(cx,  String::new);
+	let input_text = use_state(cx, String::new);
 
-	// render!(
-	// 	rect {
-	// 		width: "70",
-	// 		height: "350",
-	// 		margin: "5",
-	// 		overflow: "clip",
-	// 		focus_id: focus_id,
-	// 		background: button_background,
-	// 		color: color,
-	// 		corner_radius: "3",
-	// 		onglobalclick: onglobalclick,
-	// 		onkeydown: onkeydown,
-	// 		Input {
-	// 			max_lines: "none",
-	// 			value: input_text.get().clone(),
-	// 			onchange: |e| {
-	// 				opened.set(true);
-	// 				input_text.set( e )
-	// 			}
-	// 		}
-	// 		rect {
-	// 			width : "100%",
-	// 			height : "auto",
-	// 			//overflow : "clip",
-	// 			layer : "-1",
-	// 			if *opened.get() {
-	// 				&cx.props.children
-	// 			}
-	// 		}
-	// 	}
-	// )
-
-    if is_opened {
-        render!(
+    render!(
+        rect {
+            width: "auto",
+            height: "auto",
+            margin: "5",
             rect {
-                width: "70",
-                height: "50",
-                margin: "5",
-                rect {
-					offset_y : 40,
-                    overflow: "clip",
-                    focus_id: focus_id,
-                    layer: "-1",
-                    corner_radius: "3",
-                    onglobalclick: onglobalclick,
-                    onkeydown: onkeydown,
-                    width: "130",
-                    height: "auto",
-                    // background: desplegable_background,
-                    shadow: "0 0 20 0 rgb(0, 0, 0, 100)",
-                    padding: "7",
-                    Input {
-                        max_lines: "none",
-                        value: input_text.get().clone(),
-                        onchange: |e:String| {
-                            input_text.set( e.clone() );
-                            if let Some(caller) = &cx.props.onchange {
-                                caller.call( e );
-                            }
-                        }
-                    }
-                    &cx.props.children
-                }
-            }
-        )
-    } else {
-        render!(
-            rect {
-                margin: "5",
+                offset_y : 40,
                 overflow: "clip",
-                focus_id: focus_id,
-                background: button_background,
-                color: color,
+                layer: "-1",
                 corner_radius: "3",
-                // onclick: onclick,
-                onkeydown: onkeydown,
-                width: "70",
+                onglobalclick: onglobalclick,
+                onkeyup: onkeyup,
+                width: "130",
                 height: "auto",
-                padding: "7",
+                shadow: "0 0 20 0 rgb(0, 0, 0, 100)",
                 Input {
-					max_lines: "none",
-					value: input_text.get().clone(),
-					onchange: |e:String| {
+                    max_lines: "none",
+                    value: input_text.get().clone(),
+                    onchange: |e:String| {
                         input_text.set( e.clone() );
                         if let Some(caller) = &cx.props.onchange {
                             caller.call( e );
                         }
-					}
-				}
+                    }
+                }
+                &cx.props.children
             }
-        )
-    }
+        }
+    )
+}
+
+
+#[inline_props]
+pub fn SimpleWordComplete(cx: Scope, get_word_hints:fn(&str) -> Vec<String>) -> Element {
+    // state
+    use_shared_state_provider(cx, AutoCompleteState::default);
+
+    // open handle
+    use_shared_state_provider(cx, ||false);
+
+    let opened = use_shared_state::<bool>(cx).unwrap();
+    let state = use_shared_state::<AutoCompleteState>(cx).unwrap();
+    let input_value = use_state(cx, String::new);
+    let auto_hints:&UseState<Vec<String>> = use_state(cx, Vec::new);
+
+    let onchange = |e:String| {
+        if input_value.get() != &e {
+            let last = &e[ e.rfind( char::is_whitespace ).map( |e| e+1 ).unwrap_or( e.len() ) .. ];
+            
+            let new_hints = 
+            if last.len() > 0 {
+                get_word_hints(last)
+            } else {
+                vec![]
+            };
+
+            if auto_hints.get() != &new_hints {
+                *state.write_silent() = AutoCompleteState::None;
+                if new_hints.len() > 0 {
+                    *opened.write() = true;
+                } else {
+                    *opened.write() = false;
+                }
+                auto_hints.set( new_hints );
+            }
+
+            input_value.set(e.clone() );
+        }
+    };
+
+    println!("Painting sw");
+
+    render!(
+        AutoComplete {
+            value : input_value.get().clone(),
+            item_count : auto_hints.get().len() as _,
+            onchange : onchange,
+            for (i,h) in auto_hints.get().iter().enumerate() {
+                AutoCompleteItem {
+                    value : h.to_owned(),
+                    item_idx : i as _,
+                    onclick : |_| {},
+                    label { "{h}" }
+                }
+            }        
+        }
+    )
 }
