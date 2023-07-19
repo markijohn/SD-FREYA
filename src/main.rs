@@ -45,9 +45,17 @@ fn app(cx: Scope) -> Element {
                     first_child : render!( 
                         label { "Split1" }  
                     ),
-                    second_child : render!( rect {
-                        label { "Split2" } 
-                    })
+                    second_child : render!( 
+                        Split {
+                            direction : SplitDirection::Vertical,
+                            first_child : render!(
+                                label { "Split2"}
+                            )
+                            second_child : render!(
+                                label { "Split3" }
+                            )
+                        }
+                    )
                 }
             }
             auto_complete::SimpleWordComplete {

@@ -1,5 +1,7 @@
-# freya-template 🦀
+# Stable Diffusion freya
 
-This is a simple template for [Freya](https://github.com/marc2332/freya).
+This is just personal experimental project.
+
+Used [Freya](https://github.com/marc2332/freya).
 
 ![Demo Screenshot](./demo.png)

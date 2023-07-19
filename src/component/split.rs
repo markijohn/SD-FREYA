@@ -65,7 +65,6 @@ pub struct SplitProps<'a> {
 ///
 #[allow(non_snake_case)]
 pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
-	let direction = use_state(cx, || SplitDirection::Horizontal );
 	let first_size = use_state(cx, || (50f64) );
 	let bar_size = use_state(cx, || 3);
     let dragging = use_state(cx, || false);
@@ -86,10 +85,11 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 	let onmouseover = move |e:MouseEvent| {
 		//Can't get `MouseButton` status. It's always 'None'
 		if let SplitStatus::Dragging = status.get() {
-			match direction.get() {
+			match cx.props.direction {
 				SplitDirection::Horizontal => first_size.set( e.get_element_coordinates().x ),
 				SplitDirection::Vertical => first_size.set( e.get_element_coordinates().y ),
 			}
+			println!("{:?}", first_size);
 		}
 		
 		// if *status.get() == SplitStatus::Dragging {
@@ -111,18 +111,18 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 
 	
 
-	match direction.get() {
+	match cx.props.direction {
 		SplitDirection::Horizontal => {
 			render!(
 				rect {
 					width:"100%",
 					height:"100%",
-					background:"green",
 					direction:"horizontal",
 					onmouseover:onmouseover,
 					onclick:onmouseup,
 					rect {
 						width: "{first_size}",
+						height:"100%",
 						&cx.props.first_child,
 					},
 					rect {
@@ -136,6 +136,8 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 						}
 					}
 					rect {
+						width : "auto",
+						height : "100%",
 						&cx.props.second_child
 					}
 				}
@@ -147,8 +149,10 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 					width:"100%",
 					height:"100%",
 					direction:"vertical",
+					onmouseover:onmouseover,
+					onclick:onmouseup,
 					rect {
-						display : "center",
+						width : "100%",
 						height: "{first_size}",
 						&cx.props.first_child
 					},
@@ -164,6 +168,8 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 						}
 					},
 					rect {
+						width : "100%",
+						height : "auto",
 						&cx.props.second_child
 					}
 				}

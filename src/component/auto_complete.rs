@@ -117,37 +117,7 @@ impl AutoCompleteState {
     }
 }
 
-/// `AutoComplete` component.
-///
-/// # Props
-/// See [`AutoCompleteProps`].
-///
-/// # Styling
-/// Inherits the [`DropdownTheme`](freya_hooks::DropdownTheme) theme.
-///
-/// # Example
-/// ```no_run
-/// # use freya::prelude::*;
-///
-/// fn app(cx: Scope) -> Element {
-///     let hints = ["alice", "bob", "carol"]
-///     let input_value = use_state(cx, || "input here...".to_string());
-///     render!(
-///         AutoComplete {
-///             value: input_value.get().clone(),
-///             values.iter().map(|ch| {
-///                 rsx!(
-///                     AutoCompleteItem {
-///                         value: ch.to_string(),
-///                         onclick: move |_| selected_dropdown.set(ch.to_string()),
-///                         label { "! {ch}" }
-///                     }
-///                 )
-///             })
-///         }
-///     )
-/// }
-/// ```
+
 #[allow(non_snake_case)]
 fn AutoComplete<'a, T>(cx: Scope<'a, AutoCompleteProps<'a, T>>) -> Element<'a>
 where
@@ -161,6 +131,7 @@ where
 
     let color = theme.dropdown.font_theme.color;
 
+    /// What's meaning?
     // Update the provided value if the passed value changes
     // use_effect(cx, &cx.props.value, move |value| {
     //     *selected.write() = value;
@@ -216,10 +187,20 @@ where
     render!(
         rect {
             width: "auto",
-            height: "auto",
+            height: "70", //This rect height must be fixed.
             margin: "5",
+            Input {
+                max_lines: "1",
+                value: input_text.get().clone(),
+                onchange: |e:String| {
+                    input_text.set( e.clone() );
+                    if let Some(caller) = &cx.props.onchange {
+                        caller.call( e );
+                    }
+                }
+            }
             rect {
-                offset_y : 40,
+                offset_y : "1.0",
                 overflow: "clip",
                 layer: "-1",
                 corner_radius: "3",
@@ -228,23 +209,40 @@ where
                 width: "130",
                 height: "auto",
                 shadow: "0 0 20 0 rgb(0, 0, 0, 100)",
-                Input {
-                    max_lines: "none",
-                    value: input_text.get().clone(),
-                    onchange: |e:String| {
-                        input_text.set( e.clone() );
-                        if let Some(caller) = &cx.props.onchange {
-                            caller.call( e );
-                        }
-                    }
+                if *opened.read() {
+                    &cx.props.children
                 }
-                &cx.props.children
-            }
+            }    
         }
     )
 }
 
-
+/// `SimpleWordComplete` component.
+///
+///
+/// # Example
+/// ```no_run
+/// # use freya::prelude::*;
+/// use component::auto_complete;
+///
+/// fn app(cx: Scope) -> Element {
+///     let hints = ["alice", "bob", "carol"]
+///     let input_value = use_state(cx, || "input here...".to_string());
+///     render!(
+///         auto_complete::SimpleWordComplete {
+///             get_word_hints : |last| {
+///                 const hints:[&'static str;79] = [
+///                     "Alice", "Bob", "Car","Dog","Elephant","Fish","Giraffe","Horse","Ice cream","Jaguar","Kangaroo","Lion","Monkey","Nectarine","Octopus","Penguin","Queen","Rabbit","Snake","Tiger","Umbrella","Vase","Whale","Xylophone","Yak","Zebra",
+///                     "Aardvark","Bison","Cheetah","Dolphin","Elephant","Falcon","Gorilla","Hippopotamus","Ibis","Jaguar","Kangaroo","Lion","Moose","Nightingale","Ostrich","Penguin","Quokka","Raccoon","Squirrel","Tiger","Umbrella","Vulture","Walrus","X-ray tetra","Yak","Zebra",
+///                     "Alligator","Bear","Cat","Dog","Elephant","Fox","Giraffe","Horse","Iguana","Jaguar","Kangaroo","Lion","Monkey","Nightingale","Octopus","Penguin","Quokka","Rabbit","Snake","Tiger","Umbrella","Vulture","Whale","X-ray fish","Yak","Zoo",
+///                     "Alpine"];
+///                 hints.iter().filter( |h| h.len() != last.len() && h.starts_with(last) )
+///                     .map( |e| e.to_string() ).collect::<Vec<String>>()
+///             }
+///         }
+///     )
+/// }
+/// ```
 #[inline_props]
 pub fn SimpleWordComplete(cx: Scope, get_word_hints:fn(&str) -> Vec<String>) -> Element {
     // state
