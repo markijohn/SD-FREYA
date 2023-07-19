@@ -70,6 +70,8 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
     let dragging = use_state(cx, || false);
 	let status = use_state(cx, SplitStatus::default);
 
+	let (node_ref,size) = use_node(cx);
+
 	let onmousedown = move |e: MouseEvent| {
 		if let Some(MouseButton::Left) = e.data.get_trigger_button() {
 			status.set( SplitStatus::Dragging );
@@ -89,7 +91,6 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 				SplitDirection::Horizontal => first_size.set( e.get_element_coordinates().x ),
 				SplitDirection::Vertical => first_size.set( e.get_element_coordinates().y ),
 			}
-			println!("{:?}", first_size);
 		}
 		
 		// if *status.get() == SplitStatus::Dragging {
@@ -136,6 +137,7 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 						}
 					}
 					rect {
+						reference : node_ref,
 						width : "auto",
 						height : "100%",
 						&cx.props.second_child

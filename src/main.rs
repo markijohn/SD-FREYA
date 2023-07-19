@@ -10,9 +10,12 @@ mod component;
 use component::split::{SplitDirection, Split};
 use component::auto_complete;
 
+use crate::component::prelude::SquareGrid;
+
 fn main() {
     launch(app);
 }
+
 
 fn app(cx: Scope) -> Element {
     use_init_focus(cx);
@@ -27,6 +30,7 @@ fn app(cx: Scope) -> Element {
 
     let values = cx.use_hook(|| vec!["A".to_string(), "B".to_string(), "C".to_string()]);
     let selected_dropdown = use_state(cx, || "A".to_string());
+
 
     render!(
         rect {
@@ -52,7 +56,21 @@ fn app(cx: Scope) -> Element {
                                 label { "Split2"}
                             )
                             second_child : render!(
-                                label { "Split3" }
+                                SquareGrid {
+                                    h_gap : 5.,
+                                    v_gap : 5.,
+                                    item_width : 50.,
+                                    item_height : 50.,
+                                    item_length : 30,
+                                    // builder: Box::new( move |_idx| {
+                                    //     render!(
+                                    //         label { "" }
+                                    //     )
+                                    // }),
+                                    builder: Box::new( | (cx,idx) | {
+                                        render!( label { "idx" } )
+                                    }),
+                                }
                             )
                         }
                     )
