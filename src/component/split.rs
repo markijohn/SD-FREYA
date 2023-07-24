@@ -65,8 +65,8 @@ pub struct SplitProps<'a> {
 ///
 #[allow(non_snake_case)]
 pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
-	let first_size = use_state(cx, || (50f64) );
-	let bar_size = use_state(cx, || 3);
+	let first_size = use_state(cx, || cx.props.initial_size.unwrap_or(50) );
+	let bar_size = use_state(cx, || cx.props.bar_size.unwrap_or(3) );
     let dragging = use_state(cx, || false);
 	let status = use_state(cx, SplitStatus::default);
 
@@ -88,26 +88,10 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 		//Can't get `MouseButton` status. It's always 'None'
 		if let SplitStatus::Dragging = status.get() {
 			match cx.props.direction {
-				SplitDirection::Horizontal => first_size.set( e.get_element_coordinates().x ),
-				SplitDirection::Vertical => first_size.set( e.get_element_coordinates().y ),
+				SplitDirection::Horizontal => first_size.set( e.get_element_coordinates().x as u32 ),
+				SplitDirection::Vertical => first_size.set( e.get_element_coordinates().y as u32 ),
 			}
 		}
-		
-		// if *status.get() == SplitStatus::Dragging {
-		// 	e.data.trigger_button
-
-			// let size = size.read();
-			// let coord = e.get_screen_coordinates();
-			// pos.set(
-			// 	(
-			// 		coord.x - size.area.min_x() as f64,
-			// 		coord.y - size.area.min_y() as f64,
-			// 	)
-			// 		.into(),
-			// );
-			// dragging.set(true);
-			// *drags.unwrap().write() = Some(cx.props.data.clone());
-		// }
 	};
 
 	
@@ -124,10 +108,11 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 					rect {
 						width: "{first_size}",
 						height:"100%",
+						overflow : "clip",
 						&cx.props.first_child,
 					},
 					rect {
-						background : "yellow", 
+						background : "rgb(50,50,50)", 
 						width:"{bar_size}", 
 						height:"100%",
 						onmousedown:onmousedown,
@@ -138,7 +123,8 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 					}
 					rect {
 						reference : node_ref,
-						width : "auto",
+						// width : "auto",
+						width : "calc(100% - {first_size} - {bar_size})",
 						height : "100%",
 						&cx.props.second_child
 					}
@@ -156,11 +142,11 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 					rect {
 						width : "100%",
 						height: "{first_size}",
+						overflow : "clip",
 						&cx.props.first_child
 					},
 					rect {
-						display : "center",
-						background : "yellow", 
+						background : "rgb(50,50,50)", 
 						width:"100%", 
 						height:"{bar_size}",
 						onmousedown:onmousedown,
@@ -171,7 +157,8 @@ pub fn Split<'a>(cx:Scope<'a,SplitProps<'a>>) -> Element {
 					},
 					rect {
 						width : "100%",
-						height : "auto",
+						// height : "auto",
+						height : "calc(100% - {first_size} - {bar_size})",
 						&cx.props.second_child
 					}
 				}

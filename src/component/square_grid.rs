@@ -2,6 +2,7 @@ use std::ops::Range;
 
 use freya::prelude::*;
 
+//The `Scope` is required for the parent element to render the item
 type BuilderFunction<'a> = dyn Fn(
         (Scope<'a,SquareGridProps<'a>>, usize,)
 ) -> Element<'a>;
@@ -38,14 +39,10 @@ pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>>) -> Element {
 
 	let props = cx.props.clone();
 
-	let tx = cx.clone();
-
-	// , cx.props.builder.clone() );
-
 	render!(
 		rect {
 			width : "100%",
-			height : "100%",
+			// height : "100%",
 			reference : node_ref,
 			VirtualScrollView {
 				width: "100%",
