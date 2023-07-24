@@ -22,9 +22,6 @@ fn app(cx: Scope) -> Element {
     let mut times = use_state(cx, || 1);
     let mut item_size = use_state(cx, || 50f32);
 
-    let values = cx.use_hook(|| vec!["A".to_string(), "B".to_string(), "C".to_string()]);
-    let selected_dropdown = use_state(cx, || "A".to_string());
-    
     let (node_ref, node) = use_node(cx);
 
     let values = cx.use_hook(|| vec!["A".to_string(), "B".to_string(), "C".to_string()]);
@@ -60,13 +57,9 @@ fn app(cx: Scope) -> Element {
                     second_child : render!( 
                         Split {
                             direction : SplitDirection::Vertical,
-                            first_child : render!( rect {
-                                width : "100%",
-                                height : "100%",
+                            first_child : render!( 
                                 rect {
                                     width : "100%",
-                                    background : "blue",
-                                    display : "center",
                                     direction : "horizontal",
                                     SimpleWordComplete {
                                         get_word_hints : |last| {
@@ -93,7 +86,7 @@ fn app(cx: Scope) -> Element {
                                     },
                                     Input { value : value.get().clone(), onchange : |e| { value.set(e) } },
                                 }
-                            })
+                            )
                             second_child : render!( rect {
                                 width:"100%",
                                 height:"100%",
