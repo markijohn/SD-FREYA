@@ -5,7 +5,7 @@ use freya::prelude::*;
 //The `Scope` is required for the parent element to render the item
 type BuilderFunction<'a> = dyn Fn(
         (Scope<'a,SquareGridProps<'a>>, usize,)
-) -> Element<'a>;
+) -> LazyNodes<'a, 'a>;
 
 #[derive(Props)]
 pub struct SquareGridProps<'a> {
@@ -37,7 +37,32 @@ pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>>) -> Element {
 	, (cx.props.item_length)
 	);
 
-	let props = cx.props.clone();
+	// let item_builder = move |index:usize| {
+	// 	(index*xi .. index*xi+xi.min( len )).map(
+	// 		|i| (&cx.props.builder)( (cx,i) )
+	// 	)
+	// };
+	
+	// let vs_builder = Box::new( move |(key, index, cx, _)| {
+	// 	rsx! {
+	// 		rect {
+	// 			key: "{key}",
+	// 			direction : "horizontal",
+	// 			item_builder( index )
+	// 			// for i in (index*xi) .. (index*xi+xi).min( len ) {
+	// 			// 	rect {
+	// 			// 		background : "rgb(128,128,128)",
+	// 			// 		margin : "{vgap} 0 0 {hgap}",
+	// 			// 		display : "center",
+	// 			// 		width : "{w}",
+	// 			// 		height : "{h}",
+	// 			// 		label { width : "100%", align:"center", "{i}" }
+	// 			// 		// (pcx.props.builder) ( (pcx, i) )
+	// 			// 	}
+	// 			// }
+	// 		}
+	// 	}
+	// });
 
 	render!(
 		rect {
@@ -52,7 +77,7 @@ pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>>) -> Element {
 				direction:"vertical",
 				builder_values : (),
 				
-				builder: Box::new( move |(key, index, _, _)| {
+				builder: Box::new( move |(key, index, cx, _)| {
 					rsx! {
 						rect {
 							key: "{key}",
@@ -65,7 +90,7 @@ pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>>) -> Element {
 									width : "{w}",
 									height : "{h}",
 									label { width : "100%", align:"center", "{i}" }
-									// (cx.props.builder) ( (cx.clone(), i) )
+									// (pcx.props.builder) ( (pcx, i) )
 								}
 							}
 						}

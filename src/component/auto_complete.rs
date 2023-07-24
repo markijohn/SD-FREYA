@@ -186,8 +186,8 @@ where
 
     render!(
         rect {
-            width: "auto",
-            height: "70", //This rect height must be fixed.
+            // width: "auto",
+            height: "36", //This rect height must be fixed.
             margin: "5",
             Input {
                 max_lines: "1",
