@@ -4,7 +4,7 @@ use freya::prelude::*;
 
 //The `Scope` is required for the parent element to render the item
 type BuilderFunction<'a> = dyn Fn(
-        (usize,)
+        (Scope<'a, VirtualScrollViewProps<'a, ()>>,usize)
 ) -> LazyNodes<'a, 'a>;
 
 #[derive(Props)]
@@ -14,11 +14,10 @@ pub struct SquareGridProps<'a> {
 	item_width : f32,
 	item_height : f32,
 	item_length : usize,
-	builder: Box<BuilderFunction<'a>>,
+	builder : Option<Box<BuilderFunction<'a>>>
 }
 
-
-pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>>) -> Element {
+pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>> ) -> Element<'a> {
 	let (node_ref, size) = use_node(cx);
 	
 	const SCROLL_BAR_WIDTH:f32 = 15.;
@@ -36,7 +35,15 @@ pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>>) -> Element {
 	, cx.props.v_gap
 	, (cx.props.item_length)
 	);
-	
+
+	// cx.props.
+
+	// std::mem::replace(cx.props.builder.as_mut(), None);
+	// let take_fn = std::mem::take( cx.props.builder );
+
+	//let builder:BuilderFunction = cx.props.builder.into();
+	let builder = std::mem::take( &mut cx.props.builder ).unwrap();
+
 	// let vs_builder = Box::new( move |(key, index, cx, _)| {
 	// 	rsx! {
 	// 		rect {
@@ -73,7 +80,7 @@ pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>>) -> Element {
 				direction:"vertical",
 				builder_values : (),
 				
-				builder: Box::new( move |(key, index, _, _)| {
+				builder: Box::new( move |(key, index, cx, _)| {
 					rsx! {
 						rect {
 							key: "{key}",
@@ -85,7 +92,8 @@ pub fn SquareGrid<'a>(cx:Scope<'a,SquareGridProps<'a>>) -> Element {
 									display : "center",
 									width : "{w}",
 									height : "{h}",
-									label { width : "100%", align:"center", "{i}" }
+									//label { width : "100%", align:"center", "{i}" }
+									builder ( (cx,i) )
 									// (pcx.props.builder) ( (i,) )
 								}
 							}

@@ -109,7 +109,7 @@ fn app(cx: Scope) -> Element {
                                     item_width : *item_size.get(),
                                     item_height : *item_size.get(),
                                     item_length : 30,
-                                    builder: Box::new( | (idx,) | {
+                                    builder: Box::new( | (cx,idx) | {
                                         rsx!( label { "-{idx}-" } )
                                     }),
                                 }
