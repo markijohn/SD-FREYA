@@ -27,7 +27,8 @@ pub fn Detail<'a>(cx:Scope<'a,DetailProps<'a>>) -> Element<'a> {
     let open = use_state(cx, || false);
 	let (node_ref, size) = use_node(cx);
 
-    let onclick = move |_: MouseEvent| {
+    let onclick = move |e: MouseEvent| {
+        e.stop_propagation();
         open.set(!*open.get());
     };
 

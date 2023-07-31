@@ -27,7 +27,6 @@ fn app(cx: Scope) -> Element {
     let values = cx.use_hook(|| vec!["A".to_string(), "B".to_string(), "C".to_string()]);
     let selected_dropdown = use_state(cx, || "A".to_string());
 
-    
     render!(
         rect {
             width: "100%",
@@ -109,9 +108,11 @@ fn app(cx: Scope) -> Element {
                                     item_width : *item_size.get(),
                                     item_height : *item_size.get(),
                                     item_length : 30,
-                                    builder: Box::new( | (cx,idx) | {
-                                        rsx!( label { "-{idx}-" } )
-                                    }),
+                                    builder : Box::new( |(i,cx)| {
+                                        rsx!( rect {
+                                            label { "{i}" }
+                                        } )
+                                    })
                                 }
                             })
                         }
