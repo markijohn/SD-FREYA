@@ -28,8 +28,8 @@ pub fn Detail<'a>(cx:Scope<'a,DetailProps<'a>>) -> Element<'a> {
 	let (node_ref, size) = use_node(cx);
 
     let onclick = move |e: MouseEvent| {
+        //open.set(!*open.get());
         e.stop_propagation();
-        open.set(!*open.get());
     };
 
 	let (arrow,height) = if *open.get() {

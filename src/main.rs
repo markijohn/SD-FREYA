@@ -15,6 +15,11 @@ fn main() {
     launch(app);
 }
 
+pub fn make_item<'a,T>( index:usize, cx:Scope<'a, T>) -> Element<'a> {
+    render!( rect {
+        label { "{index}" }
+    } )
+}
 
 fn app(cx: Scope) -> Element {
     use_init_focus(cx);
@@ -108,11 +113,12 @@ fn app(cx: Scope) -> Element {
                                     item_width : *item_size.get(),
                                     item_height : *item_size.get(),
                                     item_length : 30,
-                                    builder : Box::new( |(i,cx)| {
-                                        rsx!( rect {
-                                            label { "{i}" }
-                                        } )
-                                    })
+                                    builder : make_item
+                                    // builder : Box::new( |i,cx:Scope<'_,VirtualScrollViewProps<'_,()>>| {
+                                    //     render!( rect {
+                                    //         label { "{i}" }
+                                    //     } )
+                                    // })
                                 }
                             })
                         }
