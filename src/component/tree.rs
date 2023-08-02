@@ -1,11 +1,15 @@
 
+type TreeLabel = Rc<Cow<'static,str>>;
+
 //The `Scope` is required for the parent element to render the item
 type BuilderFunction<'a> = dyn Fn(
 	(Scope<'a,TreeProps<'a>>, usize,)
 ) -> Element<'a>;
 
 //Implement like `FancyTree`
-pub struct TreeProps {
+#[derive(Props)]
+pub struct TreeProps<'a> {
+
 	//pub active_node
 
 	//pub selected_nodes
